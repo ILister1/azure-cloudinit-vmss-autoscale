@@ -1,0 +1,38 @@
+az vmss create \
+  --resource-group myResourceGroup \
+  --name myScaleSet \
+  --image UbuntuLTS \
+  --upgrade-policy-mode automatic \
+  --instance-count 2 \
+  --admin-username idl-dev \
+  --generate-ssh-keys
+
+az monitor autoscale create \
+  --resource-group myResourceGroup \
+  --resource myScaleSet \
+  --resource-type Microsoft.Compute/virtualMachineScaleSets \
+  --name autoscale \
+  --min-count 2 \
+  --max-count 10 \
+  --count 2
+
+az monitor autoscale rule create \
+  --resource-group myResourceGroup \
+  --autoscale-name autoscale \
+  --condition "Percentage CPU > 70 avg 5m" \
+  --scale out 1
+
+az vmss list-instance-connection-info \
+  --resource-group myResourceGroup \
+  --name myScaleSet
+
+watch az vmss list-instances \
+  --resource-group myResourceGroup \
+  --name myScaleSet \
+  --output table
+
+az monitor autoscale rule create \
+  --resource-group myResourceGroup \
+  --autoscale-name autoscale \
+  --condition "Percentage CPU < 30 avg 5m" \
+  --scale in 1
